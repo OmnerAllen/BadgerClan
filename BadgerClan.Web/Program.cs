@@ -74,6 +74,19 @@ app.MapPost("/bots/runandgun", async (MoveRequest request, ILogger<Program> logg
     return new MoveResponse(await runAndGun.PlanMovesAsync(gameState));
 });
 
+app.MapPost("/bots/OmBot", async (MoveRequest request, ILogger<Program> logger, BotStore botStore) =>
+{
+    logger.LogInformation("OmBot moved in game {gameId} Turn #{TurnNumber}", request.GameId, request.TurnNumber);
+    var currentTeam = new Team(request.YourTeamId)
+    {
+        Medpacs = request.Medpacs
+    };
+    var gameState = new GameState(request.GameId, request.BoardSize, request.TurnNumber, request.Units.Select(FromDto), request.TeamIds, currentTeam);
+    var OmBot = botStore.GetBot<OmBot>(gameState.Id, currentTeam.Id);
+
+    return new MoveResponse(await OmBot.PlanMovesAsync(gameState));
+});
+
 app.Run();
 
 Unit FromDto(UnitDto dto)
