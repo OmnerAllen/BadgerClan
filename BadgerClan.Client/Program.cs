@@ -1,4 +1,5 @@
 using BadgerClan.Logic;
+using BadgerClan.Logic.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -39,20 +40,105 @@ app.MapGet("/", () => "Sample BadgerClan bot.  Modify the code in Program.cs to 
 
 app.MapPost("/", (GameState request) =>
 {
-    // ***************************************************************************
-    // ***************************************************************************
-    // **
-    // ** Your code goes right here.
-    // ** Look in the request object to see the game state.
-    // ** Then add your moves to the myMoves list.
-    // **
-    // ***************************************************************************
-    // ***************************************************************************
+  
 
-    var myMoves = SuperSimpleExampleBot.MakeMoves(request);//Very simple bot example.  Delete this line when you write your own bot.
+    app.Logger.LogInformation("Received move request for game {gameId} turn {turnNumber}", request.GameId, request.TurnNumber);
+    var myMoves = new List<Move>();
+    var myUnits = new List<Unit>();
+
+    foreach (var unit in request.Units)
+    {
+        if (unit.Team == request.YourTeamId)
+        {
+            myUnits.Add(unit);
+        }
+    }
+    //request.
+    var myteam = myUnits;
+    if (myteam is null)
+    {
+        //myMoves stays empty
+    }
+    else
+    {
+        var enemies = request.Units.Where(u => u.Team != request.YourTeamId);
+        var squad = request.Units.Where(u => u.Team == request.YourTeamId);
+
+        foreach (var unit in squad.OrderByDescending(u => u.Type == "Knight"))
+        {
+            var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault() as Unit;
+            var myUnit = BadgerClan.Logic.Unit.Factory(unit.Type, unit.Id, unit.Attack, unit.AttackDistance, unit.Health, unit.MaxHealth, unit.Moves, unit.MaxMoves, unit.Location, unit.Team);
+            var myClosest = BadgerClan.Logic.Unit.Factory(closest.Type, closest.Id, closest.Attack, closest.AttackDistance, closest.Health, closest.MaxHealth, closest.Moves, closest.MaxMoves, closest.Location, closest.Team);
+            if (closest != null)
+            {
+
+                if (unit.Type == "Archer" && closest.Location.Distance(unit.Location) == 1)
+                {
+                    //Archers run away from knights
+                    var target = myUnit.Location.Away(closest.Location);
+                    myMoves.Add(new Move(MoveType.Walk, myUnit.Id, target));
+                    myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
+                }
+                else if (closest.Location.Distance(unit.Location) <= unit.AttackDistance)
+                {
+                    myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
+                    myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
+                }
+                // if archer closer than knight, stay still + let knight move ahead
+                if (myUnit.Type == "Archer")
+                {
+                    // calculate my position relative to team relative to closest enemy
+                    foreach (var soldier in request.Units.Where(u => u.Team == request.YourTeamId))
+                    {
+
+                        if (soldier.Type == "knight" && soldier.Location.Distance(closest.Location) > unit.Location.Distance(closest.Location))
+                        {
+                            // wait for knight to get closer to enemy than you are.
+                        }
+                        else
+                        {
+                            myMoves.Add(StepToClosest(unit, closest, request));
+                        }
+                    }
+                }
+                else
+                {
+                    myMoves.Add(StepToClosest(unit, closest, request));
+                }
+            }
+        }
+    }
 
     return new MoveResponse(myMoves);
 });
+
+Move StepToClosest(Unit unit, Unit closest, GameState request)
+{
+    Random rnd = new Random();
+
+    var target = unit.Location.Toward(closest.Location);
+
+    var neighbors = unit.Location.Neighbors();
+
+    while (request.Units.Any(u => u.Location == target))
+    {
+        if (neighbors.Any())
+        {
+            var i = rnd.Next(0, neighbors.Count() - 1);
+            target = neighbors[i];
+            neighbors.RemoveAt(i);
+        }
+        else
+        {
+            neighbors = unit.Location.MoveEast(1).Neighbors();
+        }
+    }
+
+    var move = new Move(MoveType.Walk, unit.Id, target);
+    return move;
+}
+
+
 
 app.Run();
 
