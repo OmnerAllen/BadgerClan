@@ -59,7 +59,7 @@ app.MapPost("/", (MoveRequest request) =>
         var enemies = request.Units.Where(u => u.Team != request.YourTeamId);
         var squad = request.Units.Where(u => u.Team == request.YourTeamId);
 
-        var moves = new List<Move>();
+        //var moves = new List<Move>();
 
         foreach (var unit in squad.OrderByDescending(u => u.Type == "Knight"))
         {
@@ -74,13 +74,13 @@ app.MapPost("/", (MoveRequest request) =>
                 {
                     //Archers run away from knights
                     var target = myUnit.Location.Away(myClosest.Location);
-                    moves.Add(new Move(MoveType.Walk, myUnit.Id, target));
-                    moves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
+                    myMoves.Add(new Move(MoveType.Walk, myUnit.Id, target));
+                    myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
                 }
                 else if (closest.Location.Distance(unit.Location) <= unit.AttackDistance)
                 {
-                    moves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
-                    moves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
+                    myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
+                    myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
                 }
                 // if archer closer than knight, stay still + let knight move ahead
                 if (myUnit.Type == "Archer")
@@ -93,11 +93,16 @@ app.MapPost("/", (MoveRequest request) =>
                         {
                             // wait for knight to get closer to enemy than you are.
                         }
+                        else
+                        {
+                            myMoves.Add(StepToClosest(myUnit, myClosest, request));
+
+                        }
                     }
                 }
                 else
                 {
-                    moves.Add(StepToClosest(myUnit, myClosest, request));
+                    myMoves.Add(StepToClosest(myUnit, myClosest, request));
 
                 }
             }
