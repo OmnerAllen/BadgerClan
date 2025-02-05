@@ -63,16 +63,29 @@ app.MapPost("/", (GameState request) =>
     {
         var enemies = request.Units.Where(u => u.Team != request.YourTeamId);
         var squad = request.Units.Where(u => u.Team == request.YourTeamId);
+        var pointman = squad.OrderBy(u => u.Id).FirstOrDefault();
+
 
         foreach (var unit in squad.OrderByDescending(u => u.Type == "Knight"))
         {
-            var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault();
+            
+            
+            var   closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault();
+            
             var myUnit = BadgerClan.Logic.Unit.Factory(unit.Type, unit.Id, unit.Attack, unit.AttackDistance, unit.Health, unit.MaxHealth, unit.Moves, unit.MaxMoves, unit.Location, unit.Team);
             var myClosest = BadgerClan.Logic.Unit.Factory(closest.Type, closest.Id, closest.Attack, closest.AttackDistance, closest.Health, closest.MaxHealth, closest.Moves, closest.MaxMoves, closest.Location, closest.Team);
             if (closest != null)
             {
+                if (pointman != null && unit.Id != pointman.Id &&
+                unit.Location.Distance(pointman.Location) > 5)
+                {
+                    //Don't split up
+                    var toward = unit.Location.Toward(pointman.Location);
+                    myMoves.Add(new Move(MoveType.Walk, unit.Id, toward));
+                    myMoves.Add(new Move(MoveType.Walk, unit.Id, toward.Toward(pointman.Location)));
 
-                if (unit.Type == "Archer" && closest.Location.Distance(unit.Location) == 1)
+                }
+                else if (unit.Type == "Archer" && closest.Location.Distance(unit.Location) == 1)
                 {
                     //Archers run away from knights
                     var target = myUnit.Location.Away(closest.Location);
