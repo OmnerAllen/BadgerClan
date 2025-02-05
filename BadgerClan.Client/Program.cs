@@ -66,7 +66,7 @@ app.MapPost("/", (GameState request) =>
 
         foreach (var unit in squad.OrderByDescending(u => u.Type == "Knight"))
         {
-            var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault() as Unit;
+            var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault();
             var myUnit = BadgerClan.Logic.Unit.Factory(unit.Type, unit.Id, unit.Attack, unit.AttackDistance, unit.Health, unit.MaxHealth, unit.Moves, unit.MaxMoves, unit.Location, unit.Team);
             var myClosest = BadgerClan.Logic.Unit.Factory(closest.Type, closest.Id, closest.Attack, closest.AttackDistance, closest.Health, closest.MaxHealth, closest.Moves, closest.MaxMoves, closest.Location, closest.Team);
             if (closest != null)
@@ -83,6 +83,10 @@ app.MapPost("/", (GameState request) =>
                 {
                     myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
                     myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
+                }
+                else if (request.Medpacs > 0 && unit.Health < unit.MaxHealth)
+                {
+                    myMoves.Add(new Move(MoveType.Medpac, unit.Id, unit.Location));
                 }
                 // if archer closer than knight, stay still + let knight move ahead
                 if (myUnit.Type == "Archer")
