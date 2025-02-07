@@ -46,7 +46,7 @@ A simple game of hexagonal tiles.
         }
     }
     ```
-
+### Warning: Friendly Fire is On
 
 ## Further Information
 Coordinate System: https://www.redblobgames.com/grids/hexagons/
@@ -56,37 +56,41 @@ Coordinate System: https://www.redblobgames.com/grids/hexagons/
 
 ### Game Design
 - [ ] After some rounds of no units dieing, every Unit loses one hitpoint
+    - [ ] Count the Rounds
 - [ ] If everyone dies as the same time (stalemate) tiebreakers are
     - [ ] Team with most kills
     - [ ] Most units before final hitpoint loss
-- [ ] Track number of kills
-- [x] Improve effectiveness of Medpacs
+- [x] Track number of kills
+- [x] Units can act if they have at least 0.1 moves remaining
+- [x] Improve effectiveness of Medpacs, gameengine not giving enough medpacs
 
 ### Features
 - [ ] Limit the number of players
 - [ ] Ability to boot players from a game that hasn't started
 - [x] Host can end the game from the game page, in cases of stalemate or false start
-- [ ] Timeout the calls to clients
+- [x] Timeout the calls to clients
 - [ ] Limit the size of the client move list
-- [ ] Don't make calls to dead teams
-- [ ] Ability for the host to restart the game with the same players
-- [ ] Add a game leader board
-- [ ] Game Log 
-
+- [x] Don't make calls to dead teams
+- [X] Ability for the host to restart the game with the same players
+- [X] Add a game leader board
 - [x] Delete the weather and counter page
+- [ ] Game Log 
+- [ ] Second Leaderboard with number of kills
+- [ ] Ability for host to slow down the game, make tick interval variable 
 
 
 ### Bugs
 - [ ] If you click the join button after start, the UI is odd
-- [ ] Units can be placed off the board, if there are lots of units
 - [ ] Validate the client endpoint with a request/response
 - [ ] Limit the characters for name and urls
+- [ ] Websocket occasionally disconnects from server
+- [x] Units can be placed off the board, if there are lots of units
 - [X] If there are multiple games created but not started, the radio buttons don't work right
-- [ ] Game does not declare the correct winner
+- [X] Game does not declare the correct winner
 - [x] Create game component not properly listening to game state change, specifically if another person adds a new team
 - [X] Only the host should have the start game button
-- [ ] A bad response from the client crashes causes an exception that stops the server
-- [ ] Review GameEngine.ProcessTurn(), Attack does not have the same rounding benefit as Walk, is that intentional?
+- [x] A bad response from the client crashes causes an exception that stops the server
+- [X] Review GameEngine.ProcessTurn(), Attack does not have the same rounding benefit as Walk, is that intentional?
 
 ### Documentation
 - [x] Example tutorial for moving around

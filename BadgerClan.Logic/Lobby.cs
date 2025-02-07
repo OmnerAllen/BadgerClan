@@ -7,6 +7,7 @@ public class Lobby(ILogger<Lobby> logger)
 {
     public const int TickInterval = 50;
     private Dictionary<Guid, List<GameState>> games { get; } = new();
+    private Dictionary<int, int> failCount = new();
     public event Action<GameState>? LobbyChanged;
     public void AddGame(string gameName, Guid gameOwnerId)
     {
@@ -24,7 +25,9 @@ public class Lobby(ILogger<Lobby> logger)
     }
     public ReadOnlyCollection<GameState> Games => games.Values.SelectMany(g => g).ToList().AsReadOnly();
 
-    private List<string> startingUnits = new List<string> { "Knight", "Knight", "Archer", "Archer", "Knight", "Knight" };
+    private List<string> startingUnits = new List<string> { 
+        "Knight", "Knight", "Archer", "Archer", "Knight", "Knight",
+    };
 
     private Dictionary<Guid, CancellationTokenSource> gameTokens = new();
 
@@ -56,18 +59,29 @@ public class Lobby(ILogger<Lobby> logger)
         while (game.Running || game.TurnNumber == 0)
         {
             ct.ThrowIfCancellationRequested();
+            
+            var moves = new List<Move>();
 
-            logger.LogInformation("Asking {team} for moves", game.CurrentTeam.Name);
-            try
+            if (!failCount.ContainsKey(game.CurrentTeamId) || failCount[game.CurrentTeamId] < 5)
             {
-                var moves = await game.CurrentTeam.PlanMovesAsync(game);
-                GameEngine.ProcessTurn(game, moves);
+                try
+                {
+                    logger.LogInformation("Asking {team} for moves", game.CurrentTeam.Name);
+                    moves = await game.CurrentTeam.PlanMovesAsync(game);
+                    logger.LogInformation("Got {movecount} moves", moves.Count);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error getting moves for {team}", game.CurrentTeam.Name);
+                    failCount.TryAdd(game.CurrentTeamId, 0);
+                    failCount[game.CurrentTeamId]++;
+                }
             }
-            catch (Exception ex)
+            else
             {
-                logger.LogError(ex, "Error getting moves for {team}", game.CurrentTeam.Name);
-                return;
+                logger.LogWarning("Too many failed moves for {team}. Skipping to next player", game.CurrentTeam.Name);
             }
+            GameEngine.ProcessTurn(game, moves);
 
             Thread.Sleep(TickInterval);
         }
