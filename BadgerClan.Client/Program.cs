@@ -85,19 +85,19 @@ app.MapPost("/", (GameState request) =>
                     myMoves.Add(new Move(MoveType.Walk, unit.Id, toward.Toward(pointman.Location)));
 
                 }
-                else if (unit.Type == "Archer" && closest.Location.Distance(unit.Location) == 1)
+                 if (unit.Type == "Archer" && closest.Location.Distance(unit.Location) == 1)
                 {
                     //Archers run away from knights
                     var target = myUnit.Location.Away(closest.Location);
                     myMoves.Add(new Move(MoveType.Walk, myUnit.Id, target));
                     myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
                 }
-                else if (closest.Location.Distance(unit.Location) <= unit.AttackDistance)
+                 if (closest.Location.Distance(unit.Location) <= unit.AttackDistance)
                 {
                     myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
                     myMoves.Add(SharedMoves.AttackClosest(myUnit, myClosest));
                 }
-                else if (request.Medpacs > 0 && unit.Health < unit.MaxHealth)
+                 if (request.Medpacs > 0 && unit.Health < unit.MaxHealth)
                 {
                     myMoves.Add(new Move(MoveType.Medpac, unit.Id, unit.Location));
                 }
